@@ -31,6 +31,12 @@
   <asset src="www/chromebgpage.html" target="plugins/org.chromium.bootstrap/chromebgpage.html" />
   <asset src="www/chromeappstyles.css" target="plugins/org.chromium.bootstrap/chromeappstyles.css" />
 
+  <platform name="ubuntu">
+    <header-file src="src/ubuntu/bootstrap.h" />
+    <source-file src="src/ubuntu/bootstrap.cpp" />
+    <js-module src="api/helpers/ChromeExtensionURLs.ubuntu.js" name="helpers.ChromeExtensionURLs" />
+  </platform>
+
   <platform name="android">
     <source-file src="src/android/ChromeBootstrap.java" target-dir="src/org/chromium" />
     <!-- Convert 'chrome-extension://' urls -->

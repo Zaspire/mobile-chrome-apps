@@ -40,4 +40,11 @@
       </feature>
     </config-file>
   </platform>
+
+  <platform name="ubuntu">
+    <js-module src="ubuntu_getAcceptLanguages.js" name="getAcceptLanguages1">
+      <merges target="chrome.i18n" />
+    </js-module>
+  </platform>
+
 </plugin>

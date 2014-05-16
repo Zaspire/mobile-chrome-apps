@@ -29,6 +29,11 @@
     </config-file>
   </platform>
 
+  <platform name="ubuntu">
+    <header-file src="src/ubuntu/storage.h" />
+    <source-file src="src/ubuntu/storage.cpp" />
+  </platform>
+
   <platform name="ios">
     <source-file src="src/ios/ChromeStorage.m" />
     <header-file src="src/ios/ChromeStorage.h" />
