@@ -29,6 +29,14 @@
     </config-file>
   </platform>
 
+  <platform name="ubuntu">
+    <source-file src="src/ubuntu/socket.cpp" />
+    <header-file src="src/ubuntu/socket.h" />
+    <js-module src="ubuntu_socketWrite.js" name="Writer1">
+      <merges target="chrome.socket" />
+    </js-module>
+  </platform>
+
   <platform name="ios">
     <framework src="Security.framework" />
     <framework src="CFNetwork.framework" />

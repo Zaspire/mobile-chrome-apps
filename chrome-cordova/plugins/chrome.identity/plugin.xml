@@ -39,6 +39,11 @@
 
   </platform>
 
+  <platform name="ubuntu">
+    <source-file src="src/ubuntu/identity.cpp" />
+    <header-file src="src/ubuntu/identity.h" />
+  </platform>
+
   <platform name="ios">
      <source-file src="src/ios/ChromeIdentity.m" />
      <header-file src="src/ios/ChromeIdentity.h" />
