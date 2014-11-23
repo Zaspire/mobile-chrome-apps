@@ -1,7 +1,6 @@
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
 var exec = require('cordova/exec');
 var platformId = require('cordova/platform').id;
 var callbackWithError = require('org.chromium.common.errors').callbackWithError;

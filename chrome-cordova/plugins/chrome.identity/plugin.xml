@@ -40,8 +40,16 @@
   </platform>
 
   <platform name="ubuntu">
+    <hook type="after_prepare" src="src/ubuntu/install.js" />
+
+    <config-file target="config.xml" parent="/*">
+      <feature name="GooglePlus">
+        <param policy_group="accounts" policy_version="1" />
+      </feature>
+    </config-file>
     <source-file src="src/ubuntu/identity.cpp" />
     <header-file src="src/ubuntu/identity.h" />
+    <resource-file src="chrome_identity.json" target-dir="configs/" />
   </platform>
 
   <platform name="ios">

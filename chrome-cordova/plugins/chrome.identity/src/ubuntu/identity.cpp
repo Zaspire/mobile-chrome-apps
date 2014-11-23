@@ -3,66 +3,100 @@
 
 #include <online-accounts-client/setup.h>
 #include <Accounts/Manager>
+#include <Accounts/Application>
 #include <Accounts/AccountService>
 #include <SignOn/Identity>
 #include <SignOn/SessionData>
 
-Identity::Identity(Cordova *cordova): CPlugin(cordova) {
-    OnlineAccountsClient::Setup().exec();
+static QString appId() {
+    return QCoreApplication::applicationName() + "_cordova";
 }
 
-void Identity::getAuthToken(int scId, int ecId, bool interactive, const QVariantMap &oauth2) {
-    Accounts::Manager manager("mail"); //type from file
-    Accounts::Service service; //from file
+Identity::Identity(Cordova *cordova): CPlugin(cordova) {
+}
+
+bool Identity::hasAccount() {
+    Accounts::Manager manager;
+    Accounts::Application app = manager.application(appId());
 
     auto list = manager.accountListEnabled();
     for (Accounts::AccountId id: list) {
         Accounts::Account *account = Accounts::Account::fromId(&manager, id);
-        Accounts::AccountService *s = new Accounts::AccountService(account, service);
-        auto authData = s->authData();
+        if (account->providerName() == "google")
+            return true;
+    }
 
-        SignOn::Identity *identity = SignOn::Identity::existingIdentity(authData.credentialsId());
-        auto authSession = identity->createSession(authData.method());
+    return false;
+}
 
-        QVariantMap map = authData.parameters();
-        map.insert("UiPolicy", SignOn::RequestPasswordPolicy);
-        map.insert("ClientId", oauth2["client_id"]);
-        //        map.insert("ClientSecret", "mZk50Jl_MhDhxwLGLv8eFyJW");
+void Identity::login(int scId, int ecId, const QVariantMap &oauth2) {
+    Accounts::Manager manager;
+    Accounts::Application app = manager.application(appId());
+    auto list = manager.accountListEnabled();
+    for (Accounts::AccountId id: list) {
+        Accounts::Account *account = Accounts::Account::fromId(&manager, id, this);
+        if (account->providerName() != "google")
+            continue;
 
-        map.insert("WindowId", 10);
+        for (Accounts::Service &service: account->services()) {
+            if (app.isValid() && app.serviceUsage(service).isEmpty())
+                continue;
 
-        QStringList scopes;
-        for (QVariant &v: oauth2["scopes"].toList()) {
-            assert(v.toString().size());
-            scopes.append(v.toString());
-        }
+            Accounts::AccountService *s = new Accounts::AccountService(account, service);
+            Accounts::AuthData authData = s->authData();
 
-        map.insert("Scope", scopes);
-        map.insert("RedirectUri", QString("https://oficlfehfenioickohognhdhmmcpceil.chromiumapp.org/"));
+            SignOn::Identity *identity = SignOn::Identity::existingIdentity(authData.credentialsId(), this);
+            QPointer<SignOn::AuthSession> authSession = identity->createSession(authData.method());
 
-        qCritical() << oauth2["scopes"];
-        /*
-    "client_id": "665859454684.apps.googleusercontent.com",
-    "scopes": [ -->> List of strings
-      "https://www.googleapis.com/auth/drive"
-      ]*/
-        QMetaObject::Connection handler1, handler2;
-        authSession->connect(authSession.data(), &SignOn::AuthSession::response, [=] (const SignOn::SessionData &sessionData) {
-                qCritical() << sessionData.toMap();
-                qCritical() << "1";
-                authSession->name();
+            QVariantMap map = authData.parameters();
+            map.insert("ClientId", oauth2["client_id"]);
+            map.remove("ClientSecret");
+            //            map.insert("ClientSecret", QString("vLxhjmr4joC-Ghp6qxRWJ-xV"));
+
+            map.insert("ResponseType", QString("token"));
+            map.insert("AuthPath", QString("o/oauth2/auth"));
+
+            map.insert("WindowId", m_cordova->rootObject()->window()->winId());
+
+            QStringList scopes;
+            for (QVariant &v: oauth2["scopes"].toList()) {
+                assert(v.toString().size());
+                scopes.append(v.toString());
+            }
+            map.insert("Scope", scopes);
+            map.insert("RedirectUri", QString("http://localhost/"));
+
+            authSession->connect(authSession.data(), &SignOn::AuthSession::response, [authSession, scId, this] (const SignOn::SessionData &sessionData) {
                 QVariantMap obj;
                 obj.insert("token", sessionData.toMap()["AccessToken"]);
                 cb(scId, obj);
-                qCritical() << "2";
-        });
-        authSession->process(map, authData.mechanism());
-        //    void error(const SignOn::Error &err);
-
-        //    void response(const SignOn::SessionData &sessionData);
-    //---> toMap;
+            });
+            authSession->connect(authSession.data(), &SignOn::AuthSession::error, [authSession, ecId, this] (const SignOn::Error &) {
+                cb(ecId);
+            });
+            authSession->process(map, "user_agent");
+            return;
+        }
     }
+    cb(ecId, "not_authorized");
 }
 
-void Identity::removeCachedAuthToken(int scId, int ecId, const QString &token) {
+
+void Identity::getAuthToken(int scId, int ecId, bool, const QVariantMap &oauth2) {
+    if (!hasAccount()) {
+        OnlineAccountsClient::Setup *setup = new OnlineAccountsClient::Setup(this);
+
+        setup->setProviderId("google");
+#ifndef Q_PROCESSOR_X86
+        setup->setApplicationId(appId());
+#endif
+        setup->connect(setup, &OnlineAccountsClient::Setup::finished, [=] () {
+            login(scId, ecId, oauth2);
+        });
+        setup->exec();
+    } else
+        login(scId, ecId, oauth2);
+}
+
+void Identity::removeCachedAuthToken(int, int, const QString &) {
 }

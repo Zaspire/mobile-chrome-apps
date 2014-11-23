@@ -16,6 +16,7 @@
 #define _IDENTITY_H_HJKHJDASB6769821
 
 #include <QtCore>
+#include <QtQuick>
 
 #include <cplugin.h>
 #include <cordova.h>
@@ -39,6 +40,9 @@ public:
 public slots:
     void getAuthToken(int scId, int ecId, bool interactive, const QVariantMap &oauth2);
     void removeCachedAuthToken(int scId, int ecId, const QString &token);
+private:
+    void login(int scId, int ecId, const QVariantMap &oauth2);
+    bool hasAccount();
 };
 
 #endif
